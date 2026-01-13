@@ -1,6 +1,7 @@
 """
 botK - Versão Profissional para Vercel
 Design sofisticado com bot stateless otimizado
+Updated: Force redeploy 2026-01-13
 """
 
 from flask import Flask, jsonify, request
