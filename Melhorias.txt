@@ -1,0 +1,8 @@
+Alterar a frase : Respostas rápidas, seguras e automáticas, sem pagar uma fortuna por APIs externas.
+Gravar vídeo de demonstração , postar no youtube e incorporar a pagina de vendas
+Alterar pagina do facebook para os anuncios
+Pagina de vendas melhor
+Criativos
+Lista de disparo a partir de uma lista pronta (excel)
+IA acoplada (criar?)ou integrar api
+Integrar api whatsaap para funcionamento web

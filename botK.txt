@@ -1,0 +1,75 @@
+Documentação do Fluxo Conversacional - botK
+
+Olá! Sou o botK - seu assistente virtual!
+Este é um simulador de chat WhatsApp para demonstração.
+
+FLUXO DE CONVERSA:
+1. Mensagem de boas-vindas automática
+2. Aguardar saudação do usuário (oi, olá, hey, etc.)
+3. Solicitar nome da pessoa e guardar
+4. Solicitar número do celular com DDD e guardar
+5. Chamar a pessoa pelo nome e apresentar menu principal
+
+MENU PRINCIPAL:
+1️⃣ - Principais Funcionalidades
+   • Atendimento 24h Automatizado
+   • Consultas Inteligentes  
+   • Agendamento Automático
+   • Envio de Documentos
+   • Transferência Inteligente
+   • Integração com emails
+
+2️⃣ - Problemas que Você Enfrenta (sem automação)
+   • Tempo desperdiçado com perguntas repetitivas
+   • Negócios perdidos por demora
+   • Trabalho sem parar (pressão 24h)
+   • Custos abusivos (APIs caras)
+   • Qualidade inconsistente
+
+3️⃣ - O que Muda com Automação (botK)
+   • Produtividade x10
+   • Negócios rodando 24 horas
+   • Mais liberdade para equipe
+   • Economia real
+   • Padronização de atendimento
+
+Após usuários verificar o menu escolhido como primeira opção, mostrar as seguintes opções: 
+Agora você pode :
+
+1 - Quero ver o menu 2 (se essa , mostrar o conteúdo do menu 2)
+2 - Quero ver o menu 3 (se essa , mostrar o conteúdo do menu 3)
+3 - Conhecer nosso planos e valores (se essa , mostrar as duas opções abaixo)
+
+3.1 Licença Única
+Instalação local
+Uso vitalício
+Suporte técnico opcional
+R$ 1.289 (pagamento único)
+
+3.2 Plano Instalação + Suporte
+Instalação inicial
+Atualizações e backup
+Suporte remoto mensal
+R$ 689 (instalação) + R$ 89/mês
+
+Após usuários verificar o menu escolhido como SEGUNDA opção, mostrar todas as opções de menu a ele novamente a acrescentando as opções abaixo: 
+4️⃣ - Falar com Atendente
+   📱 WhatsApp: (48) 99931-4665
+   🔗 Link direto: https://w.app/q8drou
+
+5️⃣ - Encerrar Demonstração
+   Agradecimento + contatos para contato real
+
+REPOSITÓRIO:
+https://github.com/marcelloheck-arch/botK
+
+NOTA: O sistema de investimentos e planos foi COMENTADO para uso futuro conforme solicitado.
+
+
+
+
+
+
+
+
+

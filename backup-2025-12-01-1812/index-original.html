@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>botK - Simulador de Chat WhatsApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .chat-container {
+      height: 100vh;
+      background: #ECE5DD;
+    }
+    .message-bubble {
+      max-width: 80%;
+      word-wrap: break-word;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .message-bot {
+      background: white;
+      align-self: flex-start;
+    }
+    .message-user {
+      background: #DCF8C6;
+      align-self: flex-end;
+    }
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      max-width: 60px;
+    }
+    .typing-dot {
+      height: 8px;
+      width: 8px;
+      border-radius: 50%;
+      background: #999;
+      margin: 0 2px;
+      animation: typing 1.4s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+      30% { transform: translateY(-10px); opacity: 1; }
+    }
+    .quick-button {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .quick-button:hover {
+      background: #1DA851;
+      transform: scale(1.05);
+    }
+    .scroll-smooth { scroll-behavior: smooth; }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="font-sans">`
+
+  <!-- Chat Container -->
+  <div id="chatApp" class="chat-container flex flex-col">
+    <!-- Header WhatsApp -->
+    <header class="bg-[#075E54] text-white p-4 flex items-center space-x-3 shadow-lg">
+      <div class="w-10 h-10 bg-[#25D366] rounded-full flex items-center justify-center">
+        <i class="fas fa-robot text-white text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="font-semibold text-lg">botK</h1>
+        <p class="text-sm opacity-90" id="status">online</p>
+      </div>
+      <div class="flex space-x-4 text-xl">
+        <i class="fas fa-search cursor-pointer hover:opacity-70"></i>
+        <i class="fas fa-ellipsis-v cursor-pointer hover:opacity-70"></i>
+      </div>
+    </header>
+
+    <!-- Messages Area -->
+    <div class="flex-1 overflow-y-auto p-4 scroll-smooth" id="messagesArea">
+      <div class="flex flex-col space-y-2" id="messagesList">
+        <!-- Messages will be inserted here by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Quick Buttons Area -->
+    <div id="quickButtonsArea" class="px-4 py-2 hidden">
+      <!-- Quick buttons will be inserted here -->
+    </div>
+
+    <!-- Input Area -->
+    <div class="bg-white border-t border-gray-200 p-4">
+      <div class="flex items-center space-x-3">
+        <div class="flex space-x-2 text-gray-500">
+          <i class="fas fa-smile text-xl cursor-pointer hover:text-gray-700"></i>
+          <i class="fas fa-paperclip text-xl cursor-pointer hover:text-gray-700"></i>
+        </div>
+        <div class="flex-1 relative">
+          <input 
+            type="text" 
+            id="messageInput" 
+            placeholder="Digite uma mensagem..." 
+            class="w-full p-3 border border-gray-300 rounded-full focus:outline-none focus:border-[#25D366] pr-12"
+            maxlength="500"
+          >
+          <button 
+            id="sendButton" 
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#25D366] text-white rounded-full p-2 hover:bg-[#1DA851] transition-colors"
+          >
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <i class="fas fa-microphone text-gray-500 text-xl cursor-pointer hover:text-gray-700"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    class BotKChat {
+      constructor() {
+        this.messages = [];
+        this.currentStep = 'initial';
+        this.userName = '';
+        this.userPhone = '';
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.messagesList = document.getElementById('messagesList');
+        this.quickButtonsArea = document.getElementById('quickButtonsArea');
+        
+        this.init();
+      }
+
+      init() {
+        // Event listeners
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') this.sendMessage();
+        });
+
+        // Start conversation
+        setTimeout(() => {
+          this.addBotMessage("Olá! Bem-vindo ao botK!\n\nSou seu assistente virtual e vou demonstrar como podemos revolucionar o atendimento do seu negócio!");
+          
+          setTimeout(() => {
+            this.addBotMessage("Para começar nossa demonstração, digite qualquer saudação (oi, olá, hey, etc.)");
+          }, 2000);
+        }, 1000);
+      }
+
+      sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message) return;
+
+        this.addUserMessage(message);
+        this.messageInput.value = '';
+        
+        setTimeout(() => this.processMessage(message), 500);
+      }
+
+      processMessage(message) {
+        const msgLower = message.toLowerCase().trim();
+
+        switch (this.currentStep) {
+          case 'initial':
+            if (this.isGreeting(msgLower)) {
+              this.currentStep = 'name';
+              this.addBotMessage("Perfeito! Para começar, digite seu nome:");
+            } else {
+              this.addBotMessage("Olá! Para iniciar nossa demonstração, digite uma saudação (oi, olá, hey, etc.)");
+            }
+            break;
+
+          case 'name':
+            if (this.validateName(message)) {
+              this.userName = message;
+              this.currentStep = 'phone';
+              this.addBotMessage(`Olá ${this.userName}! É um prazer conhecê-lo!\n\nPara continuarmos, preciso do seu telefone:\nDigite: Seu número com DDD\nExemplo: 48 99999-9999`);
+            } else {
+              this.addBotMessage("Por favor, digite um nome válido:");
+            }
+            break;
+
+          case 'phone':
+            if (this.validatePhone(message)) {
+              this.userPhone = message;
+              this.currentStep = 'menu';
+              this.showMainMenu();
+            } else {
+              this.addBotMessage("Por favor, digite um telefone válido com DDD:\nExemplo: 48 99999-9999");
+            }
+            break;
+
+          case 'menu':
+            this.handleMenuOption(message);
+            break;
+        }
+      }
+
+      showMainMenu() {
+        this.addBotMessage(`Perfeito, ${this.userName}! Agora escolha uma opção:`);
+        this.showQuickButtons([
+          { text: '1️⃣ Principais Funcionalidades', value: '1' },
+          { text: '2️⃣ Problemas que Você Enfrenta', value: '2' },
+          { text: '3️⃣ O que Muda com Automação', value: '3' },
+          { text: '4️⃣ Falar com Atendente', value: '4' },
+          { text: '5️⃣ Encerrar Demonstração', value: '5' }
+        ]);
+      }
+
+      handleMenuOption(option) {
+        this.hideQuickButtons();
+        
+        switch (option) {
+          case '1':
+            this.addBotMessage(`✨ PRINCIPAIS FUNCIONALIDADES:\n\n🤖 Atendimento 24h Automatizado:\n• Respostas instantâneas mesmo de madrugada\n• Sem perdas de negócio por demora na resposta\n\n🧠 Consultas Inteligentes:\n• Produtos, serviços, preços, profissionais\n• Relações de documentos (se for o caso)\n\n📅 Agendamento Automático:\n• Marcação de horários\n\n📄 Envio de Documentos:\n• PDFs, tabelas, listas automáticas\n• Organização profissional\n\n🔄 Transferência Inteligente:\n• Detecta quando precisa de humano\n• Preserva contexto da conversa\n\n📧 Integração com emails`);
+            setTimeout(() => this.showBackButton(), 2000);
+            break;
+
+          case '2':
+            this.addBotMessage(`❌ PROBLEMAS QUE VOCÊ ENFRENTA SEM AUTOMAÇÃO:\n\n⏰ Tempo Desperdiçado\n• Mesmas perguntas 50x por dia\n• Equipe sobrecarregada com básico\n\n💸 Negócios Perdidos\n• Clientes desistem por demora\n• Concorrência mais rápida\n\n😓 Trabalho Sem Parar\n• Pressão para responder 24h\n• Equipe estressada e cansada\n\n💰 Custos Abusivos\n• APIs caras (R$ 300+ /mês)\n• Dependência de terceiros\n\n❓ Qualidade Inconsistente\n• Respostas diferentes da equipe\n• Informações desencontradas`);
+            setTimeout(() => this.showBackButton(), 2000);
+            break;
+
+          case '3':
+            this.addBotMessage(`✅ O QUE MUDA COM AUTOMAÇÃO:\n\n🚀 Produtividade x10\n• Equipe focada em vendas complexas\n• Fim das perguntas repetitivas\n\n🌙 Negócios rodando 24 Horas\n• Atendimento perfeito de madrugada\n• Diminuição nas oportunidades perdidas\n\n🗽 Mais Liberdade\n• Equipe pode se concentrar em outras tarefas\n• Sistema rodando sozinho\n\n💎 Economia Real\n• Sem valores abusivos\n• ROI em menos de 60 dias\n\n✅ Padronização de atendimento\n• Mesma qualidade sempre\n• Informações consistentes`);
+            setTimeout(() => this.showBackButton(), 2000);
+            break;
+
+          case '4':
+            this.addBotMessage(`🎭 Estamos no botK de demonstração.\n\nSe quiser saber mais sobre a automação e receber uma proposta de valores, chame no número:\n\n📱 WhatsApp: (48) 99931-4665\n🔗 Link direto: https://w.app/q8drou\n\nPara encerrar a demonstração digite 5`);
+            setTimeout(() => this.showBackButton(), 2000);
+            break;
+
+          case '5':
+            this.addBotMessage(`👋 Obrigado por testar o botK!\n\nFicou interessado na automação?\nEntre em contato:\n\n📱 WhatsApp: (48) 99931-4665\n🔗 Link direto: https://w.app/q8drou`);
+            setTimeout(() => {
+              this.showQuickButtons([{ text: '🔄 Reiniciar Demonstração', value: 'restart' }]);
+            }, 2000);
+            break;
+
+          case 'restart':
+            this.restart();
+            break;
+
+          case 'voltar':
+            this.showMainMenu();
+            break;
+
+          default:
+            this.addBotMessage("Por favor, escolha uma opção válida (1, 2, 3, 4 ou 5):");
+            setTimeout(() => this.showMainMenu(), 1000);
+            break;
+        }
+      }
+
+      showBackButton() {
+        this.showQuickButtons([{ text: '⬅️ Voltar ao Menu Principal', value: 'voltar' }]);
+      }
+
+      restart() {
+        this.messages = [];
+        this.currentStep = 'initial';
+        this.userName = '';
+        this.userPhone = '';
+        this.messagesList.innerHTML = '';
+        this.hideQuickButtons();
+        this.init();
+      }
+
+      addBotMessage(text) {
+        this.showTyping();
+        setTimeout(() => {
+          this.hideTyping();
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'message-bubble message-bot fade-in';
+          messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+          this.messagesList.appendChild(messageDiv);
+          this.scrollToBottom();
+        }, 1500);
+      }
+
+      addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-bubble message-user fade-in';
+        messageDiv.textContent = text;
+        this.messagesList.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typing';
+        typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+        this.messagesList.appendChild(typingDiv);
+        this.scrollToBottom();
+      }
+
+      hideTyping() {
+        const typing = document.getElementById('typing');
+        if (typing) typing.remove();
+      }
+
+      showQuickButtons(buttons) {
+        this.quickButtonsArea.innerHTML = '';
+        buttons.forEach(button => {
+          const btn = document.createElement('button');
+          btn.className = 'quick-button';
+          btn.textContent = button.text;
+          btn.addEventListener('click', () => {
+            this.addUserMessage(button.text);
+            setTimeout(() => this.processMessage(button.value), 500);
+          });
+          this.quickButtonsArea.appendChild(btn);
+        });
+        this.quickButtonsArea.classList.remove('hidden');
+      }
+
+      hideQuickButtons() {
+        this.quickButtonsArea.classList.add('hidden');
+      }
+
+      scrollToBottom() {
+        setTimeout(() => {
+          this.messagesList.parentElement.scrollTop = this.messagesList.parentElement.scrollHeight;
+        }, 100);
+      }
+
+      isGreeting(message) {
+        const greetings = ['ola', 'olá', 'oi', 'hello', 'hi', 'hey', 'hola', 'bom dia', 'boa tarde', 'boa noite', 'opa', 'eai', 'e ai'];
+        return greetings.some(greeting => message.includes(greeting));
+      }
+
+      validateName(name) {
+        return name.length >= 2 && !this.isGreeting(name.toLowerCase()) && !/\d{8,}/.test(name);
+      }
+
+      validatePhone(phone) {
+        const cleanPhone = phone.replace(/\D/g, '');
+        return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+      }
+    }
+
+    // Initialize chat when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      new BotKChat();
+    });
+  </script>
+
+</body>
+</html>

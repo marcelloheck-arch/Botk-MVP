@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>botK - Simulador de Chat WhatsApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .chat-container {
+      height: 100vh;
+      background: #ECE5DD;
+    }
+    .message-bubble {
+      max-width: 80%;
+      word-wrap: break-word;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .message-bot {
+      background: white;
+      align-self: flex-start;
+    }
+    .message-user {
+      background: #DCF8C6;
+      align-self: flex-end;
+    }
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      max-width: 60px;
+    }
+    .typing-dot {
+      height: 8px;
+      width: 8px;
+      border-radius: 50%;
+      background: #999;
+      margin: 0 2px;
+      animation: typing 1.4s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+      30% { transform: translateY(-10px); opacity: 1; }
+    }
+    .quick-button {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .quick-button:hover {
+      background: #1DA851;
+      transform: scale(1.05);
+    }
+    .scroll-smooth { scroll-behavior: smooth; }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="font-sans">`
+
+  <!-- Chat Container -->
+  <div id="chatApp" class="chat-container flex flex-col">
+    <!-- Header WhatsApp -->
+    <header class="bg-[#075E54] text-white p-4 flex items-center space-x-3 shadow-lg">
+      <div class="w-10 h-10 bg-[#25D366] rounded-full flex items-center justify-center">
+        <i class="fas fa-robot text-white text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="font-semibold text-lg">botK</h1>
+        <p class="text-sm opacity-90" id="status">online</p>
+      </div>
+      <div class="flex space-x-4 text-xl">
+        <i class="fas fa-search cursor-pointer hover:opacity-70"></i>
+        <i class="fas fa-ellipsis-v cursor-pointer hover:opacity-70"></i>
+      </div>
+    </header>
+
+    <!-- Messages Area -->
+    <div class="flex-1 overflow-y-auto p-4 scroll-smooth" id="messagesArea">
+      <div class="flex flex-col space-y-2" id="messagesList">
+        <!-- Messages will be inserted here by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Quick Buttons Area -->
+    <div id="quickButtonsArea" class="px-4 py-2 hidden">
+      <!-- Quick buttons will be inserted here -->
+    </div>
+
+    <!-- Input Area -->
+    <div class="bg-white border-t border-gray-200 p-4">
+      <div class="flex items-center space-x-3">
+        <div class="flex space-x-2 text-gray-500">
+          <i class="fas fa-smile text-xl cursor-pointer hover:text-gray-700"></i>
+          <i class="fas fa-paperclip text-xl cursor-pointer hover:text-gray-700"></i>
+        </div>
+        <div class="flex-1 relative">
+          <input 
+            type="text" 
+            id="messageInput" 
+            placeholder="Digite uma mensagem..." 
+            class="w-full p-3 border border-gray-300 rounded-full focus:outline-none focus:border-[#25D366] pr-12"
+            maxlength="500"
+          >
+          <button 
+            id="sendButton" 
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#25D366] text-white rounded-full p-2 hover:bg-[#1DA851] transition-colors"
+          >
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <i class="fas fa-microphone text-gray-500 text-xl cursor-pointer hover:text-gray-700"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    class BotKChat {
+      constructor() {
+        this.messages = [];
+        this.currentStep = 'initial';
+        this.currentMenu = 'menuPrincipal';
+        this.menuHistory = [];
+        this.userName = '';
+        this.userPhone = '';
+        this.userEmail = '';
+        this.userBusiness = '';
+        this.userSegment = '';
+        this.userVolume = '';
+        this.leadData = {};
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.messagesList = document.getElementById('messagesList');
+        this.quickButtonsArea = document.getElementById('quickButtonsArea');
+        
+        this.init();
+      }
+
+      init() {
+        // Event listeners
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') this.sendMessage();
+        });
+
+        // Start conversation
+        setTimeout(() => {
+          this.addBotMessage("👋 Olá! Eu sou o BotK!\n\nSou um assistente virtual inteligente que pode revolucionar o atendimento do seu negócio no WhatsApp.\n\n📱 Funciono 24/7\n🚀 Respondo na hora\n💰 Economizo seu tempo");
+          
+          setTimeout(() => {
+            this.addBotMessage("Para começar nossa demonstração, digite qualquer saudação (oi, olá, hey, etc.)");
+          }, 3000);
+        }, 1000);
+      }
+
+      sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message) return;
+
+        this.addUserMessage(message);
+        this.messageInput.value = '';
+        
+        setTimeout(() => this.processMessage(message), 500);
+      }
+
+      processMessage(message) {
+        const msgLower = message.toLowerCase().trim();
+
+        if (this.currentStep === 'capturar_nome' || 
+            this.currentStep === 'capturar_negocio' || 
+            this.currentStep === 'capturar_segmento' || 
+            this.currentStep === 'capturar_volume' || 
+            this.currentStep === 'capturar_whatsapp' || 
+            this.currentStep === 'capturar_email_final' || 
+            this.currentStep === 'capturar_email') {
+          this.handleCapturarDados(message);
+          return;
+        }
+
+        switch (this.currentStep) {
+          case 'initial':
+            if (this.isGreeting(msgLower)) {
+              this.currentStep = 'name';
+              this.addBotMessage("Perfeito! Para começar, digite seu nome:");
+            } else {
+              this.addBotMessage("Olá! Para iniciar nossa demonstração, digite uma saudação (oi, olá, hey, etc.)");
+            }
+            break;
+
+          case 'name':
+            if (this.validateName(message)) {
+              this.userName = message;
+              this.currentStep = 'phone';
+              this.addBotMessage(`Olá ${this.userName}! É um prazer conhecê-lo!\n\nPara continuarmos, preciso do seu telefone:\nDigite: Seu número com DDD\nExemplo: 48 99999-9999`);
+            } else {
+              this.addBotMessage("Por favor, digite um nome válido:");
+            }
+            break;
+
+          case 'phone':
+            if (this.validatePhone(message)) {
+              this.userPhone = message;
+              this.currentStep = 'menu';
+              this.showMainMenu();
+            } else {
+              this.addBotMessage("Por favor, digite um telefone válido com DDD:\nExemplo: 48 99999-9999");
+            }
+            break;
+
+          case 'menu':
+            this.handleMenuOption(message);
+            break;
+        }
+      }
+
+      showMainMenu() {
+        this.currentMenu = 'menuPrincipal';
+        this.addBotMessage(`Perfeito, ${this.userName}! O que você gostaria de saber?`);
+        this.showQuickButtons([
+          { text: '1️⃣ O que eu faço?', value: '1' },
+          { text: '2️⃣ Como funciono?', value: '2' },
+          { text: '3️⃣ Planos e preços', value: '3' },
+          { text: '4️⃣ Ver demonstração', value: '4' },
+          { text: '5️⃣ Quero contratar! 💼', value: '5' }
+        ]);
+      }
+
+      handleMenuOption(option) {
+        this.hideQuickButtons();
+        
+        // Adicionar menu atual ao histórico
+        if (this.currentMenu && this.currentMenu !== 'menuPrincipal') {
+          this.menuHistory.push(this.currentMenu);
+        }
+        
+        switch (this.currentMenu) {
+          case 'menuPrincipal':
+            this.handleMainMenu(option);
+            break;
+          case 'menu1':
+            this.handleMenu1(option);
+            break;
+          case 'menu2':
+            this.handleMenu2(option);
+            break;
+          case 'menu2_1':
+            this.handleMenu2_1(option);
+            break;
+          case 'menu3':
+            this.handleMenu3(option);
+            break;
+          case 'menu3_1':
+            this.handleMenu3_1(option);
+            break;
+          case 'menu4':
+            this.handleMenu4(option);
+            break;
+          case 'demo1':
+          case 'demo2':
+          case 'demo3':
+          case 'demo4':
+          case 'demo5':
+            this.handleDemo(option);
+            break;
+          case 'menu5':
+            this.handleMenu5(option);
+            break;
+          case 'capturarDados':
+            this.handleCapturarDados(option);
+            break;
+          default:
+            this.handleDefault(option);
+            break;
+        }
+      }
+
+      handleMainMenu(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'menu1';
+            this.addBotMessage(`🤖 O que eu faço pelo seu negócio:
+
+✅ Atendo seus clientes automaticamente
+✅ Respondo perguntas frequentes
+✅ Qualifico leads
+✅ Agendo compromissos
+✅ Envio catálogos/cardápios
+✅ Recebo pedidos
+✅ Faço follow-up de vendas
+✅ E muito mais!
+
+Tudo isso enquanto você foca no que realmente importa! 🎯
+
+O que deseja saber agora?`);
+            setTimeout(() => {
+              this.showQuickButtons([
+                { text: '1️⃣ Como funciono?', value: '1' },
+                { text: '2️⃣ Planos e preços', value: '2' },
+                { text: '3️⃣ Ver demonstração prática', value: '3' },
+                { text: '4️⃣ Quero contratar!', value: '4' },
+                { text: '0️⃣ Voltar ao menu', value: '0' }
+              ]);
+            }, 2000);
+            break;
+
+          case '2':
+            this.currentMenu = 'menu2';
+            this.addBotMessage(`⚙️ Como eu funciono:
+
+🔹 Me integro ao seu WhatsApp Business
+🔹 Converso com seus clientes naturalmente
+🔹 Entendo perguntas e dou respostas personalizadas
+🔹 Passo para humano quando necessário
+🔹 Você personaliza minhas respostas
+
+📊 Painel de controle completo:
+• Veja todas as conversas
+• Acompanhe métricas
+• Ajuste respostas
+• Configure horários
+
+💡 É como ter um atendente trabalhando 24h, mas sem salário!
+
+Quer saber mais?`);
+            setTimeout(() => {
+              this.showQuickButtons([
+                { text: '1️⃣ Ver demonstração prática', value: '1' },
+                { text: '2️⃣ Planos e preços', value: '2' },
+                { text: '3️⃣ Para quais negócios serve?', value: '3' },
+                { text: '4️⃣ Quero contratar!', value: '4' },
+                { text: '0️⃣ Voltar ao menu', value: '0' }
+              ]);
+            }, 2000);
+            break;
+
+          case '3':
+            this.currentMenu = 'menu3';
+            this.addBotMessage(`💰 PLANOS E PREÇOS
+
+📦 PLANO BÁSICO - R$ 87/mês
+• 1 número WhatsApp
+• Até 1000 conversas/mês
+• Respostas automáticas
+• Suporte por email
+
+🚀 PLANO PROFISSIONAL - R$ 187/mês
+• 1 número WhatsApp
+• Conversas ilimitadas
+• Integração com sistemas (se tiver API Aberta)
+• Suporte prioritário
+
+⭐ PLANO PERSONALIZADO
+• Sob consulta
+• Múltiplos números
+• Desenvolvimento customizado
+• Suporte prioritário
+
+📋 COMO FUNCIONA:
+1. Você escolhe o plano
+2. Eu configuro tudo para você (incluso)
+3. Personalizamos juntos
+4. Em 5 dias (úteis) seu bot está no ar! 🚀
+
+💰 Pagamento: Mensal via PIX/Cartão
+✅ Cancele quando quiser, sem multa
+
+O que você prefere?`);
+            setTimeout(() => {
+              this.showQuickButtons([
+                { text: '1️⃣ Quero contratar agora!', value: '1' },
+                { text: '2️⃣ Falar com consultor', value: '2' },
+                { text: '3️⃣ Ver demonstração interativa', value: '3' },
+                { text: '4️⃣ Tenho dúvidas sobre os planos', value: '4' },
+                { text: '0️⃣ Voltar ao menu', value: '0' }
+              ]);
+            }, 2000);
+            break;
+
+          case '4':
+            this.currentMenu = 'menu4';
+            this.addBotMessage(`🎪 DEMONSTRAÇÃO INTERATIVA
+
+Vou te mostrar o que posso fazer! Escolha um cenário:
+
+1️⃣ Restaurante/Delivery
+   (cardápio, pedidos, horários)
+
+2️⃣ Clínica/Consultório
+   (agendamentos, confirmações)
+
+3️⃣ Loja/E-commerce
+   (catálogo, rastreio, vendas)
+
+4️⃣ Serviços/Consultoria
+   (informações, orçamentos)
+
+5️⃣ Imobiliária
+   (imóveis, visitas, propostas)
+
+💡 Escolha o mais parecido com seu negócio!`);
+            setTimeout(() => {
+              this.showQuickButtons([
+                { text: '1️⃣ Restaurante/Delivery', value: '1' },
+                { text: '2️⃣ Clínica/Consultório', value: '2' },
+                { text: '3️⃣ Loja/E-commerce', value: '3' },
+                { text: '4️⃣ Serviços/Consultoria', value: '4' },
+                { text: '5️⃣ Imobiliária', value: '5' },
+                { text: '0️⃣ Voltar ao menu', value: '0' }
+              ]);
+            }, 2000);
+            break;
+
+          case '5':
+            this.currentMenu = 'menu5';
+            this.addBotMessage(`🎉 EXCELENTE ESCOLHA!
+
+Vamos começar sua transformação digital!
+
+Para te passar a melhor proposta, preciso de algumas informações:
+
+Por favor, me informe:
+
+1️⃣ Seu nome
+2️⃣ Nome do seu negócio
+3️⃣ Segmento (restaurante, loja, clínica, etc)
+4️⃣ Quantas mensagens recebe por dia aproximadamente
+5️⃣ Seu WhatsApp para contato
+
+Você pode:`);
+            setTimeout(() => {
+              this.showQuickButtons([
+                { text: '1️⃣ Preencher aqui mesmo', value: '1' },
+                { text: '2️⃣ Falar direto: (48) 99931-4665', value: '2' },
+                { text: '3️⃣ Receber proposta por email', value: '3' }
+              ]);
+            }, 2000);
+            break;
+
+          default:
+            this.addBotMessage("Por favor, escolha uma opção válida (1, 2, 3, 4 ou 5):");
+            setTimeout(() => this.showMainMenu(), 1000);
+            break;
+        }
+      }
+
+      handleMenu1(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'menu2';
+            this.goToMenu2();
+            break;
+          case '2':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          case '3':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case '4':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      handleMenu2(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case '2':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          case '3':
+            this.currentMenu = 'menu2_1';
+            this.showMenu2_1();
+            break;
+          case '4':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      showMenu2_1() {
+        this.addBotMessage(`🎯 NEGÓCIOS QUE SE BENEFICIAM:
+
+✅ Restaurantes e Delivery
+✅ Clínicas e Consultórios
+✅ Lojas e E-commerce
+✅ Academias
+✅ Salões de Beleza
+✅ Imobiliárias
+✅ Autoescolas
+✅ Pet Shops
+✅ Assistências Técnicas
+✅ Escritórios de Advocacia
+✅ Contabilidade
+✅ Qualquer negócio que atende no WhatsApp!
+
+💡 Se você recebe mensagens de clientes, EU posso te ajudar!
+
+O que deseja agora?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Ver demonstração do meu segmento', value: '1' },
+            { text: '2️⃣ Planos e preços', value: '2' },
+            { text: '3️⃣ Quero contratar!', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      handleMenu2_1(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case '2':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          case '3':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      handleMenu3(option) {
+        switch (option) {
+          case '1':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '2':
+            this.redirectToWhatsApp();
+            break;
+          case '3':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case '4':
+            this.currentMenu = 'menu3_1';
+            this.showMenu3_1();
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      showMenu3_1() {
+        this.addBotMessage(`❓ DÚVIDAS FREQUENTES SOBRE PLANOS
+
+Escolha sua dúvida:`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Qual a diferença entre os planos?', value: '1' },
+            { text: '2️⃣ Quanto tempo leva para configurar?', value: '2' },
+            { text: '3️⃣ Posso cancelar quando quiser?', value: '3' },
+            { text: '4️⃣ O que são "conversas"?', value: '4' },
+            { text: '5️⃣ Vocês fazem a instalação?', value: '5' },
+            { text: '6️⃣ Preciso ter CNPJ?', value: '6' },
+            { text: '7️⃣ Como funciona o suporte?', value: '7' },
+            { text: '8️⃣ Falar com consultor', value: '8' },
+            { text: '0️⃣ Voltar aos planos', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      handleMenu3_1(option) {
+        switch (option) {
+          case '1':
+            this.showFAQ1();
+            break;
+          case '2':
+            this.showFAQ2();
+            break;
+          case '3':
+            this.showFAQ3();
+            break;
+          case '4':
+            this.showFAQ4();
+            break;
+          case '5':
+            this.showFAQ5();
+            break;
+          case '6':
+            this.showFAQ6();
+            break;
+          case '7':
+            this.showFAQ7();
+            break;
+          case '8':
+            this.redirectToWhatsApp();
+            break;
+          case 'contratar':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '0':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      handleMenu4(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'demo1';
+            this.showDemo1();
+            break;
+          case '2':
+            this.currentMenu = 'demo2';
+            this.showDemo2();
+            break;
+          case '3':
+            this.currentMenu = 'demo3';
+            this.showDemo3();
+            break;
+          case '4':
+            this.currentMenu = 'demo4';
+            this.showDemo4();
+            break;
+          case '5':
+            this.currentMenu = 'demo5';
+            this.showDemo5();
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      handleDemo(option) {
+        switch (option) {
+          case '1':
+            this.addBotMessage(`📱 Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+            break;
+          case '2':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case '3':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          case '0':
+            this.goToMainMenu();
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      handleMenu5(option) {
+        switch (option) {
+          case '1':
+            this.currentMenu = 'capturarDados';
+            this.currentStep = 'capturar_nome';
+            this.addBotMessage("Perfeito! Vou te guiar passo a passo.\\n\\nPrimeiro, qual o seu nome?");
+            break;
+          case '2':
+            this.redirectToWhatsApp();
+            break;
+          case '3':
+            this.currentStep = 'capturar_email';
+            this.addBotMessage("Ótimo! Para enviar a proposta por email, qual o seu email?");
+            break;
+          default:
+            this.showInvalidOption();
+            break;
+        }
+      }
+
+      // Métodos auxiliares de navegação
+      goToMainMenu() {
+        this.currentMenu = 'menuPrincipal';
+        this.showMainMenu();
+      }
+
+      goToMenu2() {
+        this.currentMenu = 'menu2';
+        this.addBotMessage(`⚙️ Como eu funciono:
+
+🔹 Me integro ao seu WhatsApp Business
+🔹 Converso com seus clientes naturalmente
+🔹 Entendo perguntas e dou respostas personalizadas
+🔹 Passo para humano quando necessário
+🔹 Você personaliza minhas respostas
+
+📊 Painel de controle completo:
+• Veja todas as conversas
+• Acompanhe métricas
+• Ajuste respostas
+• Configure horários
+
+💡 É como ter um atendente trabalhando 24h, mas sem salário!
+
+Quer saber mais?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Ver demonstração prática', value: '1' },
+            { text: '2️⃣ Planos e preços', value: '2' },
+            { text: '3️⃣ Para quais negócios serve?', value: '3' },
+            { text: '4️⃣ Quero contratar!', value: '4' },
+            { text: '0️⃣ Voltar ao menu', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      goToMenu3() {
+        this.currentMenu = 'menu3';
+        this.addBotMessage(`💰 PLANOS E PREÇOS
+
+📦 PLANO BÁSICO - R$ 87/mês
+• 1 número WhatsApp
+• Até 1000 conversas/mês
+• Respostas automáticas
+• Suporte por email
+
+🚀 PLANO PROFISSIONAL - R$ 187/mês
+• 1 número WhatsApp
+• Conversas ilimitadas
+• Integração com sistemas (se tiver API Aberta)
+• Suporte prioritário
+
+⭐ PLANO PERSONALIZADO
+• Sob consulta
+• Múltiplos números
+• Desenvolvimento customizado
+• Suporte prioritário
+
+📋 COMO FUNCIONA:
+1. Você escolhe o plano
+2. Eu configuro tudo para você (incluso)
+3. Personalizamos juntos
+4. Em 5 dias (úteis) seu bot está no ar! 🚀
+
+💰 Pagamento: Mensal via PIX/Cartão
+✅ Cancele quando quiser, sem multa
+
+O que você prefere?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero contratar agora!', value: '1' },
+            { text: '2️⃣ Falar com consultor', value: '2' },
+            { text: '3️⃣ Ver demonstração interativa', value: '3' },
+            { text: '4️⃣ Tenho dúvidas sobre os planos', value: '4' },
+            { text: '0️⃣ Voltar ao menu', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      goToMenu4() {
+        this.currentMenu = 'menu4';
+        this.addBotMessage(`🎪 DEMONSTRAÇÃO INTERATIVA
+
+Vou te mostrar o que posso fazer! Escolha um cenário:
+
+1️⃣ Restaurante/Delivery
+   (cardápio, pedidos, horários)
+
+2️⃣ Clínica/Consultório
+   (agendamentos, confirmações)
+
+3️⃣ Loja/E-commerce
+   (catálogo, rastreio, vendas)
+
+4️⃣ Serviços/Consultoria
+   (informações, orçamentos)
+
+5️⃣ Imobiliária
+   (imóveis, visitas, propostas)
+
+💡 Escolha o mais parecido com seu negócio!`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Restaurante/Delivery', value: '1' },
+            { text: '2️⃣ Clínica/Consultório', value: '2' },
+            { text: '3️⃣ Loja/E-commerce', value: '3' },
+            { text: '4️⃣ Serviços/Consultoria', value: '4' },
+            { text: '5️⃣ Imobiliária', value: '5' },
+            { text: '0️⃣ Voltar ao menu', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      goToMenu5() {
+        this.currentMenu = 'menu5';
+        this.addBotMessage(`🎉 EXCELENTE ESCOLHA!
+
+Vamos começar sua transformação digital!
+
+Para te passar a melhor proposta, preciso de algumas informações:
+
+Por favor, me informe:
+
+1️⃣ Seu nome
+2️⃣ Nome do seu negócio
+3️⃣ Segmento (restaurante, loja, clínica, etc)
+4️⃣ Quantas mensagens recebe por dia aproximadamente
+5️⃣ Seu WhatsApp para contato
+
+Você pode:`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Preencher aqui mesmo', value: '1' },
+            { text: '2️⃣ Falar direto: (48) 99931-4665', value: '2' },
+            { text: '3️⃣ Receber proposta por email', value: '3' }
+          ]);
+        }, 2000);
+      }
+
+      redirectToWhatsApp() {
+        this.addBotMessage(`📱 Redirecionando para WhatsApp...
+
+Entre em contato agora:
+📞 (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Nosso consultor está online para te atender!`);
+      }
+
+      // Demonstrações
+      showDemo1() {
+        this.addBotMessage(`🍕 DEMO: RESTAURANTE
+
+Olá! Bem-vindo ao Restaurante Demo!
+
+Veja como eu atenderia seus clientes:
+
+1️⃣ Ver cardápio 📋
+━━━━━━━━━━━━━━━━━━
+🍕 PIZZAS - R$ 25,00 - R$ 35,00
+🍔 LANCHES - R$ 12,00 - R$ 18,00  
+🍟 PORÇÕES - R$ 15,00 - R$ 25,00
+🥤 BEBIDAS - R$ 4,00 - R$ 8,00
+━━━━━━━━━━━━━━━━━━
+
+2️⃣ Fazer pedido
+3️⃣ Consultar horários
+4️⃣ Ver promoções
+5️⃣ Falar com atendente
+
+💡 Imagine isso funcionando 24h no SEU restaurante!
+📈 Menos chamadas perdidas = Mais vendas
+
+Gostou da demonstração?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero isso pro meu negócio!', value: '1' },
+            { text: '2️⃣ Ver outra demonstração', value: '2' },
+            { text: '3️⃣ Planos e preços', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 3000);
+      }
+
+      showDemo2() {
+        this.addBotMessage(`🏥 DEMO: CLÍNICA/CONSULTÓRIO
+
+Olá! Bem-vindo à Clínica Demo!
+
+Veja como eu atenderia seus pacientes:
+
+1️⃣ Agendar consulta
+2️⃣ Confirmar agendamento
+3️⃣ Consultar horários 📅
+━━━━━━━━━━━━━━━━━━
+⏰ Atendemos das 09:00 às 18:00
+📅 Segunda a Sexta-feira  
+🏥 Especialidades disponíveis
+━━━━━━━━━━━━━━━━━━
+4️⃣ Especialidades disponíveis
+5️⃣ Falar com atendente
+
+💡 Imagine reduzir faltas e otimizar sua agenda!
+📅 Confirmações automáticas = Menos gaps na agenda
+
+Gostou da demonstração?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero isso pra minha clínica!', value: '1' },
+            { text: '2️⃣ Ver outra demonstração', value: '2' },
+            { text: '3️⃣ Planos e preços', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 3000);
+      }
+
+      showDemo3() {
+        this.addBotMessage(`🛍️ DEMO: LOJA/E-COMMERCE
+
+Olá! Bem-vindo à Loja Demo!
+
+Veja como eu atenderia seus clientes:
+
+1️⃣ Ver catálogo de produtos 🛍️
+━━━━━━━━━━━━━━━━━━
+☕ CANECA GLITTER - R$ 55,00
+🍽️ CANECA BRANCA - R$ 45,00  
+👕 CAMISETA ALGODÃO - R$ 79,90
+━━━━━━━━━━━━━━━━━━
+
+2️⃣ Consultar preços
+3️⃣ Rastrear pedido
+4️⃣ Formas de pagamento
+5️⃣ Falar com vendedor
+
+💡 Imagine vender enquanto dorme!
+🚀 Atendimento 24/7 = Mais conversões
+
+Gostou da demonstração?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero isso pra minha loja!', value: '1' },
+            { text: '2️⃣ Ver outra demonstração', value: '2' },
+            { text: '3️⃣ Planos e preços', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 3000);
+      }
+
+      showDemo4() {
+        this.addBotMessage(`💼 DEMO: SERVIÇOS/CONSULTORIA
+
+Olá! Bem-vindo à Consultoria Demo!
+
+Veja como eu qualificaria seus leads:
+
+1️⃣ Informações sobre serviços 📋
+━━━━━━━━━━━━━━━━━━
+💎 A consultoria em pedras exóticas é um 
+serviço especializado que oferece suporte 
+na seleção, especificação e aplicação de 
+rochas ornamentais únicas e de alto padrão 
+em projetos de arquitetura e design de interiores.
+━━━━━━━━━━━━━━━━━━
+
+2️⃣ Solicitar orçamento
+3️⃣ Agendar reunião
+4️⃣ Cases de sucesso
+5️⃣ Falar com consultor
+
+💡 Imagine qualificar leads automaticamente!
+⏱️ Mais tempo para focar em clientes quentes
+
+Gostou da demonstração?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero isso pro meu negócio!', value: '1' },
+            { text: '2️⃣ Ver outra demonstração', value: '2' },
+            { text: '3️⃣ Planos e preços', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 3000);
+      }
+
+      showDemo5() {
+        this.addBotMessage(`🏠 DEMO: IMOBILIÁRIA
+
+Olá! Bem-vindo à Imobiliária Demo!
+
+Veja como eu atenderia seus clientes:
+
+1️⃣ Ver imóveis disponíveis
+2️⃣ Agendar visita
+3️⃣ Enviar proposta
+4️⃣ Documentos necessários
+5️⃣ Falar com corretor
+
+💡 Imagine agendar visitas 24/7!
+🏡 Menos tempo perdido = Mais negócios fechados
+
+Gostou da demonstração?`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero isso pra minha imobiliária!', value: '1' },
+            { text: '2️⃣ Ver outra demonstração', value: '2' },
+            { text: '3️⃣ Planos e preços', value: '3' },
+            { text: '0️⃣ Menu principal', value: '0' }
+          ]);
+        }, 3000);
+      }
+
+      // FAQs
+      showFAQ1() {
+        this.addBotMessage(`📊 DIFERENÇA ENTRE PLANOS:
+
+BÁSICO (R$ 87/mês):
+• Ideal para negócios pequenos
+• Até 1000 conversas/mês
+• Funcionalidades essenciais
+
+PROFISSIONAL (R$ 187/mês):
+• Para negócios em crescimento
+• Conversas ILIMITADAS
+• Integrações avançadas
+
+PERSONALIZADO:
+• Para grandes operações
+• Tudo customizado
+• Múltiplos números
+• Desenvolvimento sob demanda`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero contratar!', value: '1' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      showFAQ2() {
+        this.addBotMessage(`⏱️ TEMPO DE CONFIGURAÇÃO:
+
+De 5 dias úteis após:
+✅ Contratação confirmada
+✅ Dados fornecidos
+✅ Número WhatsApp validado (Exceto para plano PERSONALIZADO)
+
+O processo:
+1. Você contrata (5min)
+2. Enviamos questionário (até 4 horas)
+3. Configuramos tudo (nós fazemos!)
+4. Treinamento rápido (30min a marcar)
+5. Seu bot está NO AR! 🚀`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero começar agora!', value: 'contratar' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      showFAQ3() {
+        this.addBotMessage(`✅ POLÍTICA DE CANCELAMENTO:
+
+• Cancele QUANDO QUISER
+• SEM multas
+• SEM burocracia
+• SEM taxas extras
+
+Basta avisar com 5 dias de antecedência.
+
+Simples assim! Sem pegadinhas.`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Quero contratar!', value: '1' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      showFAQ4() {
+        this.addBotMessage(`💬 O QUE SÃO 'CONVERSAS'?
+
+1 conversa = 1 sessão de 24h com um cliente
+
+Exemplo:
+• Cliente manda 'oi' às 10h
+• Vocês trocam 50 mensagens até 15h
+• = Conta como 1 CONVERSA
+
+Se ele voltar no dia seguinte:
+• = Nova conversa
+
+BÁSICO: 1000 conversas/mês (suficiente para pequenos negócios)
+PROFISSIONAL: ILIMITADO`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Entendi! Quero contratar', value: 'contratar' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      showFAQ5() {
+        this.addBotMessage(`🔧 INSTALAÇÃO E CONFIGURAÇÃO:
+
+SIM! Fazemos TUDO por você:
+
+✅ Instalação completa
+✅ Configuração personalizada
+✅ Treinamento incluído
+✅ Testes antes de liberar
+✅ Suporte pós-instalação
+
+Você SÓ precisa:
+• Fornecer o número WhatsApp
+• Responder um questionário simples
+• Aprovar as configurações
+
+E pronto! 🎉`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Perfeito! Quero contratar', value: 'contratar' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      showFAQ6() {
+        this.addBotMessage(`📄 PRECISO TER CNPJ?
+
+NÃO é obrigatório!
+
+Você pode contratar como:
+✅ Pessoa Física (CPF)
+✅ MEI
+✅ Empresa (CNPJ)
+
+A única diferença:
+• Nota fiscal só para CNPJ/MEI
+• Recibo para Pessoa Física
+
+O BOT funciona igual para todos! 🤖`);
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Ótimo! Quero contratar', value: 'contratar' },
+            { text: '2️⃣ Outra dúvida', value: '2' },
+            { text: '0️⃣ Voltar', value: '0' }
+          ]);
+        }, 2000);
+      }
+
+      // Sistema de captura de dados
+      handleCapturarDados(message) {
+        switch (this.currentStep) {
+          case 'capturar_nome':
+            if (this.validateName(message)) {
+              this.leadData.nome = message;
+              this.currentStep = 'capturar_negocio';
+              this.addBotMessage(`Prazer em conhecê-lo, ${message}! 
+
+Agora me fale, qual o nome do seu negócio?`);
+            } else {
+              this.addBotMessage("Por favor, digite um nome válido:");
+            }
+            break;
+
+          case 'capturar_negocio':
+            this.leadData.negocio = message;
+            this.currentStep = 'capturar_segmento';
+            this.addBotMessage("Perfeito! Qual o segmento do seu negócio? (restaurante, loja, clínica, etc.)");
+            break;
+
+          case 'capturar_segmento':
+            this.leadData.segmento = message;
+            this.currentStep = 'capturar_volume';
+            this.addBotMessage("Entendi! Quantas mensagens vocês recebem por dia aproximadamente?");
+            break;
+
+          case 'capturar_volume':
+            this.leadData.volume = message;
+            this.currentStep = 'capturar_whatsapp';
+            this.addBotMessage("Ótimo! Qual seu WhatsApp para contato? (com DDD)\nEx: 48 99999-9999");
+            break;
+
+          case 'capturar_whatsapp':
+            if (this.validatePhone(message)) {
+              this.leadData.whatsapp = message;
+              this.currentStep = 'capturar_email_final';
+              this.addBotMessage("Por último, qual seu email?");
+            } else {
+              this.addBotMessage("Por favor, digite um telefone válido com DDD:\nExemplo: 48 99999-9999");
+            }
+            break;
+
+          case 'capturar_email_final':
+            if (this.validateEmail(message)) {
+              this.leadData.email = message;
+              this.finalizarCaptura();
+            } else {
+              this.addBotMessage("Por favor, digite um email válido:");
+            }
+            break;
+
+          case 'capturar_email':
+            if (this.validateEmail(message)) {
+              this.leadData.email = message;
+              this.finalizarCapturaEmail();
+            } else {
+              this.addBotMessage("Por favor, digite um email válido:");
+            }
+            break;
+        }
+      }
+
+      finalizarCaptura() {
+        // Salvar dados do lead
+        this.salvarLead();
+        
+        this.addBotMessage(`✅ Dados recebidos com sucesso!
+
+Resumo:
+👤 Nome: ${this.leadData.nome}
+🏢 Negócio: ${this.leadData.negocio}
+🎯 Segmento: ${this.leadData.segmento}
+📊 Volume: ${this.leadData.volume} msgs/dia
+📱 WhatsApp: ${this.leadData.whatsapp}
+📧 Email: ${this.leadData.email}
+
+Vou preparar uma proposta personalizada e entro em contato em até 24h!
+
+Enquanto isso:`);
+        
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Ver demonstrações', value: 'demo' },
+            { text: '2️⃣ Revisar planos', value: 'planos' },
+            { text: '3️⃣ Voltar ao início', value: 'inicio' }
+          ]);
+        }, 3000);
+      }
+
+      finalizarCapturaEmail() {
+        this.addBotMessage(`✅ Email recebido!
+
+Enviaremos uma proposta detalhada para: ${this.leadData.email}
+
+Verifique sua caixa de entrada em até 24h!
+
+📱 Dúvidas? WhatsApp: (48) 99931-4665
+🔗 https://wa.me/5548999314665
+
+Obrigado pelo interesse! 🚀`);
+        
+        setTimeout(() => {
+          this.showQuickButtons([
+            { text: '1️⃣ Ver demonstrações', value: 'demo' },
+            { text: '2️⃣ Revisar planos', value: 'planos' },
+            { text: '3️⃣ Voltar ao início', value: 'inicio' }
+          ]);
+        }, 2000);
+      }
+
+      handleDefault(option) {
+        switch (option) {
+          case 'demo':
+            this.currentMenu = 'menu4';
+            this.goToMenu4();
+            break;
+          case 'planos':
+            this.currentMenu = 'menu3';
+            this.goToMenu3();
+            break;
+          case 'inicio':
+            this.goToMainMenu();
+            break;
+          case 'restart':
+            this.restart();
+            break;
+          default:
+            this.addBotMessage("Por favor, escolha uma opção válida:");
+            break;
+        }
+      }
+
+      // Validações
+      validateEmail(email) {
+        const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+        return re.test(email);
+      }
+
+      // Salvar lead (localStorage por enquanto)
+      salvarLead() {
+        const leads = JSON.parse(localStorage.getItem('botk_leads') || '[]');
+        const novoLead = {
+          ...this.leadData,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        };
+        leads.push(novoLead);
+        localStorage.setItem('botk_leads', JSON.stringify(leads));
+        
+        // Log para analytics
+        console.log('Lead capturado:', novoLead);
+      }
+
+
+
+      showInvalidOption() {
+        this.addBotMessage("Ops! Opção inválida. Por favor, escolha uma das opções disponíveis:");
+        // Re-mostrar botões do menu atual
+        setTimeout(() => {
+          switch(this.currentMenu) {
+            case 'menuPrincipal':
+              this.showMainMenu();
+              break;
+            case 'menu1':
+              // Implementar re-mostrar menu1
+              break;
+            // Adicionar outros casos conforme necessário
+          }
+        }, 1000);
+      }
+
+      addBotMessage(text) {
+        this.showTyping();
+        setTimeout(() => {
+          this.hideTyping();
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'message-bubble message-bot fade-in';
+          messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+          this.messagesList.appendChild(messageDiv);
+          this.scrollToBottom();
+        }, 1500);
+      }
+
+      addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-bubble message-user fade-in';
+        messageDiv.textContent = text;
+        this.messagesList.appendChild(messageDiv);
+        this.scrollToBottom();
+      }
+
+      showTyping() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typing';
+        typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+        this.messagesList.appendChild(typingDiv);
+        this.scrollToBottom();
+      }
+
+      hideTyping() {
+        const typing = document.getElementById('typing');
+        if (typing) typing.remove();
+      }
+
+      showQuickButtons(buttons) {
+        this.quickButtonsArea.innerHTML = '';
+        buttons.forEach(button => {
+          const btn = document.createElement('button');
+          btn.className = 'quick-button';
+          btn.textContent = button.text;
+          btn.addEventListener('click', () => {
+            this.addUserMessage(button.text);
+            setTimeout(() => this.processMessage(button.value), 500);
+          });
+          this.quickButtonsArea.appendChild(btn);
+        });
+        this.quickButtonsArea.classList.remove('hidden');
+      }
+
+      hideQuickButtons() {
+        this.quickButtonsArea.classList.add('hidden');
+      }
+
+      scrollToBottom() {
+        setTimeout(() => {
+          this.messagesList.parentElement.scrollTop = this.messagesList.parentElement.scrollHeight;
+        }, 100);
+      }
+
+      isGreeting(message) {
+        const greetings = ['ola', 'olá', 'oi', 'hello', 'hi', 'hey', 'hola', 'bom dia', 'boa tarde', 'boa noite', 'opa', 'eai', 'e ai'];
+        return greetings.some(greeting => message.includes(greeting));
+      }
+
+      validateName(name) {
+        return name.length >= 2 && !this.isGreeting(name.toLowerCase()) && !/\d{8,}/.test(name);
+      }
+
+      validatePhone(phone) {
+        const cleanPhone = phone.replace(/\D/g, '');
+        return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+      }
+    }
+
+    // Initialize chat when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      new BotKChat();
+    });
+  </script>
+
+</body>
+</html>
