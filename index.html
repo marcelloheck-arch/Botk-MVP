@@ -127,9 +127,15 @@
           return;
         }
         
-        // Novo fluxo MVP - Opções do menu principal
-        if (['1', '2', '3', '4'].includes(message.trim())) {
-          this.handleMenuMVP(message.trim());
+        // Opção 3 do submenu dúvidas (produtos mais vendidos) - PRIORIDADE
+        if (message.trim() === '3' && this.lastMenu === 'duvidas') {
+          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barra de Proteína\n- Creatina\n\nQuer ajuda para escolher?\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          return;
+        }
+        
+        // Para outras opções do submenu dúvidas
+        if (['1', '2', '4'].includes(message.trim()) && this.lastMenu === 'duvidas') {
+          this.addBotMessage("Obrigado pelo contato 😊 Sempre que precisar, é só chamar.\n\n0️⃣ Voltar ao menu principal");
           return;
         }
         
@@ -139,15 +145,9 @@
           return;
         }
         
-        // Opção 3 do submenu dúvidas (produtos mais vendidos)
-        if (message.trim() === '3' && this.lastMenu === 'duvidas') {
-          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barras proteicas\n- Vitaminas\n\nQuer ajuda para escolher?\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
-          return;
-        }
-        
-        // Para outras opções do submenu dúvidas
-        if (['1', '2', '4'].includes(message.trim()) && this.lastMenu === 'duvidas') {
-          this.addBotMessage("Obrigado pelo contato 😊 Sempre que precisar, é só chamar.\n\n0️⃣ Voltar ao menu principal");
+        // Novo fluxo MVP - Opções do menu principal (DEPOIS dos submenus)
+        if (['1', '2', '3', '4'].includes(message.trim())) {
+          this.handleMenuMVP(message.trim());
           return;
         }
         
