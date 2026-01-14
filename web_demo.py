@@ -271,7 +271,7 @@ HTML_TEMPLATE = """
         <div class="chat-container">
             <div class="demo-info">
                 <strong>🎯 Como usar:</strong><br>
-                Sou seu assistente virtual e vou demonstrar como podemos revolucionar o atendimento do seu negócio!
+                Olá 👋 Pra te atender melhor, me diga o que você precisa agora!
                 • Use os botões rápidos ou digite as opções
             </div>
             
