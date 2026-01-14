@@ -121,6 +121,12 @@
       processMessage(message) {
         const msgLower = message.toLowerCase().trim();
         
+        // Opção para voltar ao menu principal
+        if (['0', 'menu', 'voltar'].includes(msgLower)) {
+          this.showMainMenu();
+          return;
+        }
+        
         // Novo fluxo MVP - Opções do menu principal
         if (['1', '2', '3', '4'].includes(message.trim())) {
           this.handleMenuMVP(message.trim());
@@ -135,34 +141,39 @@
         
         // Opção 3 do submenu dúvidas (produtos mais vendidos)
         if (message.trim() === '3' && this.lastMenu === 'duvidas') {
-          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barras proteicas\n- Vitaminas\n\nQuer ajuda para escolher?\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barras proteicas\n- Vitaminas\n\nQuer ajuda para escolher?\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
           return;
         }
         
         // Para outras opções do submenu dúvidas
         if (['1', '2', '4'].includes(message.trim()) && this.lastMenu === 'duvidas') {
-          this.addBotMessage("Obrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          this.addBotMessage("Obrigado pelo contato 😊 Sempre que precisar, é só chamar.\n\n0️⃣ Voltar ao menu principal");
           return;
         }
         
         // Telefone ou saudação - mostrar menu principal
+        this.showMainMenu();
+      }
+      
+      showMainMenu() {
+        this.lastMenu = null;
         this.addBotMessage("Olá 👋\nPra te atender melhor, me diga o que você precisa agora:\n\n1️⃣ Fazer um pedido\n2️⃣ Tirar dúvida sobre produtos\n3️⃣ Entrega / horário\n4️⃣ Falar com um atendente\n\nDigite o número da opção:");
       }
 
       handleMenuMVP(option) {
         switch (option) {
           case '1':
-            this.addBotMessage("Perfeito 👍 Você já é cliente cadastrado?\n\n✅ Sim, já sou cliente\n❌ Ainda não\n\n**Digite sua opção:**");
+            this.addBotMessage("Perfeito 👍 Você já é cliente cadastrado?\n\n✅ Sim, já sou cliente\n❌ Ainda não\n\n0️⃣ Voltar ao menu principal\n\n**Digite sua opção:**");
             break;
           case '2':
             this.lastMenu = 'duvidas';
-            this.addBotMessage("Selecione o tipo de dúvida:\n\n1️⃣ Preço\n2️⃣ Composição / benefício\n3️⃣ Produtos mais vendidos\n4️⃣ Outra dúvida\n\n**Digite o número da opção:**");
+            this.addBotMessage("Selecione o tipo de dúvida:\n\n1️⃣ Preço\n2️⃣ Composição / benefício\n3️⃣ Produtos mais vendidos\n4️⃣ Outra dúvida\n\n0️⃣ Voltar ao menu principal\n\n**Digite o número da opção:**");
             break;
           case '3':
-            this.addBotMessage("Sobre entregas 👇\n\n✔ As entregas são feitas por rota\n✔ O prazo depende da região\n✔ Um atendente confirma o horário após o pedido\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+            this.addBotMessage("Sobre entregas 👇\n\n✔ As entregas são feitas por rota\n✔ O prazo depende da região\n✔ Um atendente confirma o horário após o pedido\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
             break;
           case '4':
-            this.addBotMessage("Certo 👍 Vou encaminhar você para um atendente.\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+            this.addBotMessage("Certo 👍 Vou encaminhar você para um atendente.\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
             break;
           default:
             this.addBotMessage("❌ Opção inválida!\n\n**Opções disponíveis:**\n**1** - Fazer um pedido\n**2** - Dúvida sobre produtos\n**3** - Entrega / horário\n**4** - Falar com atendente\n\nDigite um número de 1 a 4:");
@@ -171,11 +182,11 @@
       
       handleSubmenuMVP(message) {
         if (['sim', 'sim, já sou cliente', 'já sou cliente'].includes(message)) {
-          this.addBotMessage("Ótimo. Para agilizar seu pedido, clique abaixo para acessar o sistema de pedidos.\n\n[Link do sistema de pedidos da empresa]\n\nNesse piloto, o pedido vai direto pro sistema que vocês já usam.\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          this.addBotMessage("Ótimo. Para agilizar seu pedido, clique abaixo para acessar o sistema de pedidos.\n\n[Link do sistema de pedidos da empresa]\n\nNesse piloto, o pedido vai direto pro sistema que vocês já usam.\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
         } else if (['não', 'nao', 'ainda não', 'ainda nao'].includes(message)) {
-          this.addBotMessage("Sem problema 🙂 Um atendente vai te orientar rapidinho para cadastro.\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          this.addBotMessage("Sem problema 🙂 Um atendente vai te orientar rapidinho para cadastro.\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
         } else {
-          this.addBotMessage("Não entendi sua resposta. Digite:\n\n✅ Sim, já sou cliente\n❌ Ainda não");
+          this.addBotMessage("Não entendi sua resposta. Digite:\n\n✅ Sim, já sou cliente\n❌ Ainda não\n\n0️⃣ Voltar ao menu principal");
         }
       }
     }
