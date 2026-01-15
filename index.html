@@ -75,6 +75,7 @@
         this.messageInput = document.getElementById('messageInput');
         this.sendButton = document.getElementById('sendButton');
         this.lastMenu = null;
+        this.waitingForHelpResponse = false;
         
         this.init();
       }
@@ -127,9 +128,24 @@
           return;
         }
         
+        // Processar resposta sobre ajuda para escolher produtos
+        if (this.waitingForHelpResponse) {
+          this.waitingForHelpResponse = false;
+          if (['sim', 's', 'yes'].includes(msgLower)) {
+            this.addBotMessage("Perfeito! Vou te conectar com um atendente especializado para te ajudar a escolher o produto ideal.\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          } else if (['não', 'nao', 'n', 'no'].includes(msgLower)) {
+            this.addBotMessage("Ok! Se precisar de ajuda, é só chamar.\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          } else {
+            this.waitingForHelpResponse = true;
+            this.addBotMessage("Não entendi sua resposta. Você gostaria de ajuda para escolher?\n\n✅ Sim\n❌ Não");
+          }
+          return;
+        }
+        
         // Opção 3 do submenu dúvidas (produtos mais vendidos) - PRIORIDADE
         if (message.trim() === '3' && this.lastMenu === 'duvidas') {
-          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barra de Proteína\n- Creatina\n\nQuer ajuda para escolher?\n\n0️⃣ Voltar ao menu principal\n\nObrigado pelo contato 😊 Sempre que precisar, é só chamar.");
+          this.waitingForHelpResponse = true;
+          this.addBotMessage("Esses são os produtos mais pedidos hoje:\n- Whey Protein\n- Barra de Proteína\n- Creatina\n\nQuer ajuda para escolher?");
           return;
         }
         
@@ -157,6 +173,7 @@
       
       showMainMenu() {
         this.lastMenu = null;
+        this.waitingForHelpResponse = false;
         this.addBotMessage("Olá 👋\nPra te atender melhor, me diga o que você precisa agora:\n\n1️⃣ Fazer um pedido\n2️⃣ Tirar dúvida sobre produtos\n3️⃣ Entrega / horário\n4️⃣ Falar com um atendente\n\nDigite o número da opção:");
       }
 
